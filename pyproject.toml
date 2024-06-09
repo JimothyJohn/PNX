@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "pnx"
+version = "0.1.0"
+description = "Product info extractor"
+authors = ["JimothyJohn <drunknmunky32@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+openai = "^1.33.0"
+tenacity = "^8.3.0"
+termcolor = "^2.4.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
