@@ -10,12 +10,25 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Install Python packages
-COPY pyproject.toml /pnx
 RUN pip3 install --no-cache-dir -U poetry
 
+# Create the /pnx directory and change ownership to appuser
+RUN mkdir -p /pnx && \
+    useradd -m appuser && \
+    chown -R appuser:appuser /pnx
+
+# Switch to the appuser
+# USER appuser
+
+# Set the working directory to /pnx
 WORKDIR /pnx
+
+# Copy the pyproject.toml into the working directory
+# COPY --chown=appuser:appuser pyproject.toml /pnx/
+COPY pyproject.toml /pnx/
+
+# Install dependencies using Poetry
 RUN poetry install
 
-# Use a non-root user
-RUN useradd -m appuser
-USER appuser
+# Set the working directory to /pnx
+WORKDIR /pnx
