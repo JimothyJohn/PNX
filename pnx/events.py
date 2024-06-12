@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 class EventHandler(AsyncAssistantEventHandler):
     @override
     async def on_text_created(self, text) -> None:
-        print(f"\nassistant > ", end="")
+        print(f"\nAgent > ", end="")
 
     @override
     async def on_text_delta(self, delta, snapshot):
@@ -37,6 +37,7 @@ class EventHandler(AsyncAssistantEventHandler):
 
         logger.info(message_content.value)
         logger.info("\n".join(citations))
+        print("\n")
 
     @override
     async def on_tool_call_created(self, tool_call):

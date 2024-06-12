@@ -16,19 +16,17 @@ RUN pip3 install --no-cache-dir -U poetry
 RUN mkdir -p /pnx && \
     useradd -m appuser && \
     chown -R appuser:appuser /pnx
-
-# Switch to the appuser
-# USER appuser
+# Copy the pyproject.toml into the working directory
+COPY pyproject.toml /pnx/ 
 
 # Set the working directory to /pnx
 WORKDIR /pnx
 
-# Copy the pyproject.toml into the working directory
-# COPY --chown=appuser:appuser pyproject.toml /pnx/
-COPY pyproject.toml /pnx/
+# Switch to the appuser
+USER appuser
 
 # Install dependencies using Poetry
 RUN poetry install
 
-# Set the working directory to /pnx
-WORKDIR /pnx
+# Set entrypoint or command if needed
+CMD ["poetry", "install"]

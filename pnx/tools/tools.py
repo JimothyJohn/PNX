@@ -38,4 +38,23 @@ A query to search for on the web.
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "scrape_website",
+            "description": "Use this function to scrape a website.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "url": {
+                        "type": "string",
+                        "description": f"""
+URL of the website to scrape.
+""",
+                    }
+                },
+                "required": ["website"],
+            },
+        },
+    },
 ]

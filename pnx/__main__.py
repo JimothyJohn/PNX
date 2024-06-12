@@ -1,20 +1,15 @@
 import asyncio
-from bot import ChatBot
-from assistant import Assistant
+from assistant import Agent
 
-bot = ChatBot()
-assistant = Assistant()
-
-userInput = "Not blank"
+agent = Agent()
 
 async def main():
-    # Test with different image sizes
     # image_path = "nameplate2.jpg"
-    await assistant.initialize()
+    await agent.initialize()
     
-    # while userInput != "":
-    userInput = input("Prompt: ")
-    response = await assistant.test(userInput=userInput)
+    userInput = input("What would you like to research?\n\n")
+    await agent.find_sources(userInput=userInput)
+    await agent.vet_sources()
 
 if __name__ == "__main__":
     asyncio.run(main())
