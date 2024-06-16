@@ -4,6 +4,7 @@ from openai import AsyncOpenAI
 from utils import *
 from tools.tools import *
 
+
 class ChatBot:
     def __init__(self):
         self.model = "gpt-4o"

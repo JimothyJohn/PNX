@@ -1,8 +1,11 @@
+import os
 import base64
+import datetime
 from tenacity import retry, wait_random_exponential, stop_after_attempt
 from termcolor import colored
 import json
-from tools.crypto import *
+
+NOW = datetime.datetime.now()
 
 
 def show_json(obj):
@@ -79,54 +82,21 @@ def encode_image(image_path):
         return base64.b64encode(image_file.read()).decode("utf-8")
 
 
-async def tool_call(self, thread, run) -> None:
-    if self.run.required_action is None:
-        return
+def save_messages(messages: list, filename: str) -> None:
+    directory_name = NOW.strftime("%Y-%m-%d_%H-%M-%S")
+    if not os.path.exists(directory_name):
+        os.makedirs(directory_name)
 
-    tool_calls = self.run.required_action.submit_tool_outputs.tool_calls
+    file_path = os.path.join(directory_name, filename)
+    with open(file_path, "w") as f:
+        json.dump(messages, f, indent=4)
 
-    for tool in tool_calls:
-        tool_outputs = []
 
-        if tool.function.name == "get_coin_price":
-            tool_query_string = eval(tool.function.arguments)["cryptocoin"]
-            output = get_coin_price(tool_query_string)
-            tool_outputs.append({"tool_call_id": tool.id, "output": f"{output}"})
+def save_webpage(html_file: str) -> None:
+    directory_name = NOW.strftime("%Y-%m-%d_%H-%M-%S")
+    if not os.path.exists(directory_name):
+        os.makedirs(directory_name)
 
-        elif tool.function.name == "search_web":
-            tool_query_string = eval(tool.function.arguments)["query"]
-            output = search_web(tool_query_string)
-            tool_outputs.append({"tool_call_id": tool.id, "output": f"{output}"})
-
-        else:
-            print(f"Error: function {tool.function.name} does not exist")
-
-            # Submit all tool outputs at once after collecting them in a list
-
-    if tool_outputs:
-        try:
-            run = await self.client.beta.threads.runs.submit_tool_outputs_and_poll(
-                thread_id=thread.id,
-                run_id=run.id,
-                tool_outputs=tool_outputs,
-            )
-            print("Tool run started...", end="")
-            while self.run.status == "queued" or self.run.status == "in_progress":
-                print(".", end="")
-                self.run = await self.client.beta.threads.runs.retrieve(
-                    thread_id=self.thread.id,
-                    run_id=self.run.id,
-                )
-                sleep(0.5)
-
-        except Exception as e:
-            print("Failed to submit tool outputs:", e)
-    else:
-        print("No tool outputs to submit.")
-
-    if run.status == "completed":
-        messages = self.client.beta.threads.messages.list(thread_id=self.thread.id)
-        for message in messages:
-            print(message)
-    else:
-        print(run.status)
+    file_path = os.path.join(directory_name, "index.html")
+    with open(file_path, "w") as f:
+        f.write(html_file)

@@ -1,15 +1,19 @@
 import logging
 from typing_extensions import override
 from openai import AsyncAssistantEventHandler
-from tools.crypto import *
+from tools import *
 
 # Configure logging
-logging.basicConfig(level=logging.WARNING, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.WARNING, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
+
 
 # https://platform.openai.com/docs/assistants/overview?context=with-streaming
 # https://github.com/openai/openai-python/blob/54a5911f5215148a0bdeb10e2bcfb84f635a75b9/src/openai/lib/streaming/_assistants.py#L459
-class EventHandler(AsyncAssistantEventHandler):
+class AsyncEventHandler(AsyncAssistantEventHandler):
+    """
     @override
     async def on_text_created(self, text) -> None:
         print(f"\nAgent > ", end="")
@@ -17,6 +21,7 @@ class EventHandler(AsyncAssistantEventHandler):
     @override
     async def on_text_delta(self, delta, snapshot):
         print(delta.value, end="")
+    """
 
     # https://platform.openai.com/docs/assistants/tools/file-search/step-5-create-a-run-and-check-the-output
     @override
@@ -37,7 +42,6 @@ class EventHandler(AsyncAssistantEventHandler):
 
         logger.info(message_content.value)
         logger.info("\n".join(citations))
-        print("\n")
 
     @override
     async def on_tool_call_created(self, tool_call):
