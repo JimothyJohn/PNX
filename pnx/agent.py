@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import os
 import json
 from openai import AsyncOpenAI
@@ -36,11 +35,12 @@ class Agent:
         )
         self.thread = await self.client.beta.threads.create()
 
-    async def __run(self, additional_instructions: str = "") -> dict:
+    async def __run(self, additional_instructions: str = "", tool_choice="auto") -> dict:
         # https://platform.openai.com/docs/assistants/overview?context=with-streaming
         async with self.client.beta.threads.runs.stream(
             thread_id=self.thread.id,
             assistant_id=self.assistant.id,
+            tool_choice=tool_choice,
             additional_instructions=additional_instructions,
             response_format={"type": "json_object"},
             event_handler=AsyncEventHandler(),
@@ -60,22 +60,38 @@ class Agent:
             tool_calls = None
 
         lastMessage = await self.client.beta.threads.messages.list(self.thread.id)
-        messageJson = json.loads(lastMessage.data[0].content[0].text.value)
+        message_content = lastMessage.data[0].content[0].text.value if lastMessage.data else None
+        messageJson = {}
+
+        if message_content:
+            print(f"Response content: {message_content}")  # Debugging line
+            try:
+                messageJson = json.loads(message_content)
+            except json.JSONDecodeError as e:
+                print(f"JSON decode error: {e}")
+                print(f"Response content: {message_content}")
+                return {"error": "Invalid JSON response"}
+        else:
+            print("No message content to parse.")
+            return {"error": "Empty response"}
+
         self.messages.append(messageJson)
         return messageJson
 
-    async def take_action(
-        self, user_message: str, additional_instructions: str, expected_output: str
-    ) -> dict:
+    async def take_action(self, problem: Problem, action: Action) -> dict:
         await self.client.beta.threads.messages.create(
-            thread_id=self.thread.id, role="user", content=user_message
+            thread_id=self.thread.id,
+            role="user",
+            content=f"""
+{action.task}. {action.expected_output}.
+""",
         )
 
         return await self.__run(
-            f"""
-{additional_instructions}.
-{expected_output}.
-"""
+            additional_instructions=f"""
+I am a {problem.owner} trying to {problem.goal} in {problem.location}.
+{problem.constraints}.
+""", tool_choice=action.tool_choice
         )
 
     async def tool_call(self, tool_calls: list, run_id: str) -> None:

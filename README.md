@@ -1,13 +1,44 @@
-# PNX
+# PNX (will be merged with MI5IX)
 
-Part number extractor. Giving you the information you need about your products.
+A Python wrapper for OpenAI Assistant. Utilizes structured inputs to delivered structured outputs for more controllable actions.
 
-## TODO
+## Quickstart
 
-[x] Extract product metadata from nameplate.
+You'll need to create custom problems and actions using the example in [research.py](pnx/research.py):
 
-[ ] Use product metadata to frame assistance.
+```bash
+# Install repo
+git clone https://github.com/JimothyJohn/PNX
+cd PNX
+pip install -U poetry
+poetry install
+# Run program
+poetry run python pnx
+```
 
-[ ] Fine-tune prompts to maximize performance (eternal).
+[Prompt schema](pnx/models.py)
 
-[ ] Provider users with a way to fix their problem.
+```python
+class Problem(BaseModel):
+    owner: str = ""
+    goal: str
+    location: str = ""
+    constraints: str = ""
+
+
+class Action(BaseModel):
+    task: str
+    additional_instructions: str
+    expected_output: str
+    tool_choice: str = "auto"
+```
+
+### Learnings
+
+* Keep prompts as compact as possible.
+
+* Reduce hallucinations by forcing the use of tools.
+
+* Separate the persona from the task.
+
+* Ask the system to explain its reasoning to help it fix its mistakes.

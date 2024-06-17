@@ -1,126 +1,70 @@
-#!/usr/bin/env python3
-import os
-import json
-from openai import AsyncOpenAI
-from utils import *
-from tools import *
-from events import AsyncEventHandler
 from models import *
+from agent import Agent
+from utils import *
 
-
-class Agent:
-    def __init__(
-        self,
-        model: str = "gpt-4o-2024-05-13",
-        api_key: str = os.environ.get("OPENAI_API_KEY"),
-        instructions: str = "",
-        additional_instructions: str = "",
-        name: str = "Agent",
-        tools: list = [],
-    ) -> None:
-        self.model = model
-        self.client = AsyncOpenAI(api_key=api_key)
-        self.run = None
-        self.instructions = instructions
-        self.additional_instructions = additional_instructions
-        self.name = name
-        self.tools = tools
-        self.messages = []
-
-    async def initialize(self) -> None:
-        self.assistant = await self.client.beta.assistants.create(
-            name=self.name,
-            instructions=self.instructions,
-            tools=self.tools,
-            model=self.model,
-        )
-        self.thread = await self.client.beta.threads.create()
-
-    async def __run(self, additional_instructions: str = "") -> dict:
-        # https://platform.openai.com/docs/assistants/overview?context=with-streaming
-        async with self.client.beta.threads.runs.stream(
-            thread_id=self.thread.id,
-            assistant_id=self.assistant.id,
-            additional_instructions=additional_instructions,
-            event_handler=AsyncEventHandler(),
-        ) as stream:
-            await stream.until_done()
-            if hasattr(stream, "get_final_run_steps") and callable(
-                getattr(stream, "get_final_run_steps")
-            ):
-                steps = await stream.get_final_run_steps()
-            else:
-                return
-
-        if hasattr(steps[-1].step_details, "tool_calls"):
-            tool_calls = steps[-1].step_details.tool_calls
-            await self.tool_call(tool_calls, steps[-1].run_id)
-        else:
-            tool_calls = None
-
-        lastMessage = await self.client.beta.threads.messages.list(self.thread.id)
-        html_contents = lastMessage.data[0].content[0].text.value
-        return html_contents
-
-    async def create_website(self, messages: list):
-        await self.client.beta.threads.messages.create(
-            thread_id=self.thread.id,
-            role="user",
-            content=f"""
-Create a website for me that lays out this information in a readable, structured format: {str(messages)}.
-Create a website frontend via a single index.html file that will outline the elements of the steps involved in the messages.
-Clearly separate and outline the steps on the webpage.
-Use a simple markdown-like layout that's designed to be scrolled like on mobile.
-""",
-        )
-        description = await self.__run(
-            """
-You will be given a list of messages that outline a thought process and a plan of action, use it to create a frontend that will help a user understand it better.
-Output the description as  pure HTML and CSS in a single index.html file.
+dev_prompt = Problem(
+    user="A market researcher trying to understand which companies, contacts, and technologies they should focus on.",
+    location="Rogers, Arkansas",
+    constraints="""
 Only create a single, index.html file.
 Do not use any external libraries or frameworks.
 Do not use any external stylesheets.
-Do not use any external scripts.
-"""
-        )
+Do not use any javascript.
+Do not use any images.
+""",
+    goal=f"""
+Create a website via a single index.html file that will outline the elements of the steps involved in the plan.
+Clearly separate and outline the steps on the webpage.
+Use a simple markdown-like layout that's designed to be scrolled like on mobile.
+Include images if they help the context.
+""",
+)
 
-        return description
+async def web_development():
+    dev = Agent(
+        name="Web Dev",
+        instructions="""
+    You are an expert frontend web developer that creates HTML files.
+    The websites you create helpfully summarize information.
+    You do not write anything except HTML and css.
+    """,
+    )
 
-    async def tool_call(self, tool_calls: list, run_id: str) -> None:
-        tool_outputs = []
-        for tool in tool_calls:
-            if tool.function.name == "get_coin_price":
-                tool_query_string = eval(tool.function.arguments)["cryptocoin"]
-                output = get_coin_price(tool_query_string)
-                tool_outputs.append({"tool_call_id": tool.id, "output": f"{output}"})
+    print("Initializing dev...           ", end="\r", flush=True)
+    await dev.initialize()
 
-            elif tool.function.name == "search_web":
-                tool_query_string = eval(tool.function.arguments)["query"]
-                output = search_web(tool_query_string)
-                tool_outputs.append({"tool_call_id": tool.id, "output": f"{output}"})
+    print("Creating website...")
+    messages = load_messages("outputs/2024-06-17_11-53-28/messages.json")
+    website = await dev.take_action(dev_prompt, Action(
+        task=f"Create a website that outlines the steps involved in the plan: {messages}",
+        expected_output="""
+Output the entire website HTML text into a JSON object in its single key called website:
+{
+    "website": 
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Research Plan</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      p {
+        color: #333;
+        font-size: 18px;
+      }
+      /* Add more styles as needed */
+    </style>
+  </head>
+  <body>
+	<p>Website goes here</p>
+  </body>
+</html>
+""",))
 
-            elif tool.function.name == "scrape_website":
-                tool_query_string = eval(tool.function.arguments)["url"]
-                output = scrape_website(tool_query_string)
-                tool_outputs.append({"tool_call_id": tool.id, "output": f"{output}"})
-
-            else:
-                print(f"Error: function {tool.function.name} does not exist")
-
-        if tool_outputs:
-            try:
-                async with self.client.beta.threads.runs.submit_tool_outputs_stream(
-                    thread_id=self.thread.id,
-                    run_id=run_id,
-                    tool_outputs=tool_outputs,
-                    event_handler=AsyncEventHandler(),
-                ) as stream:
-                    await stream.get_final_run_steps()
-
-            except Exception as e:
-                print("Failed to submit tool outputs:", e)
-        else:
-            print("No tool outputs to submit.")
-
-    async def upload(self, filename: str) -> None:
-        await self.client.files.create(file=open(f"{filename}", "rb"), purpose="vision")
+    print(website)
+    save_webpage(website["website"])

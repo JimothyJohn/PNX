@@ -1,28 +1,8 @@
-#!/usr/bin/env python3
 import json
 import os
 import requests
 
 tools = [
-    {
-        "type": "function",
-        "function": {
-            "name": "get_coin_price",
-            "description": "Use this function to get the current price of a cryptocoin.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "cryptocoin": {
-                        "type": "string",
-                        "description": f"""
-A specific cryptocoin. For example, 'bitcoin' for Bitcoin, 'ethereum' for Ethereum, etc. 
-""",
-                    }
-                },
-                "required": ["cryptocoin"],
-            },
-        },
-    },
     {
         "type": "function",
         "function": {
@@ -33,9 +13,7 @@ A specific cryptocoin. For example, 'bitcoin' for Bitcoin, 'ethereum' for Ethere
                 "properties": {
                     "query": {
                         "type": "string",
-                        "description": f"""
-A query to search for on the web.
-""",
+                        "description": "A query to search for on the web.",
                     }
                 },
                 "required": ["query"],
@@ -52,9 +30,7 @@ A query to search for on the web.
                 "properties": {
                     "url": {
                         "type": "string",
-                        "description": f"""
-URL of the website to scrape.
-""",
+                        "description": "URL of the website to scrape.",
                     }
                 },
                 "required": ["url"],
@@ -82,27 +58,7 @@ def search_web(query: str) -> str:
 
     response = requests.request("POST", url, headers=headers, data=payload)
 
-    # link = response.json()["organic"][0]["link"]
-    with open("search_output.json", "w") as f:
-        json.dump(response.json(), f, indent=4)
-
     return response.text
-
-
-def get_coin_price(cryptocoin: str) -> float:
-    """
-    Fetches the current price of a cryptocurrency in USD from the CoinGecko API.
-
-    :param cryptocoin: The name of the cryptocurrency (e.g., 'bitcoin', 'ethereum').
-    :return: The current price of the cryptocurrency in USD.
-    """
-    api_url = "https://api.coingecko.com/api/v3/simple/price"
-    params = {"ids": cryptocoin, "vs_currencies": "usd"}
-    response = requests.get(api_url, params=params)
-    response.raise_for_status()
-    data = response.json()
-    return data[cryptocoin]["usd"]
-
 
 def scrape_website(website: str) -> str:
     """
