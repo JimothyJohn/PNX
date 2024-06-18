@@ -60,6 +60,7 @@ def search_web(query: str) -> str:
 
     return response.text
 
+
 def scrape_website(website: str) -> str:
     """
     Scrapes a website.

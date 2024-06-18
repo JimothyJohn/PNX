@@ -9,18 +9,20 @@ Industrial automation engineer that works with local manufacturers to automate m
 """,
     location="Rogers, Arkansas",
     constraints="""
-Do not include executives, only local site managers, as we won't be able to contact high-level, national contacts.
+Do not include executives, only local managers, as we won't be able to contact high-level, national contacts.
 Do not recommend or mention blockchain technology as we sell hardware and blockchain doesn't work in the manufacturing space.
-Do not create any messages or outreach to the contacts, just provide relevant information and context as we will use this information to do this ourselves.
 Avoid Fortune 500 companies and prioritize small local businesses as this company doesn't have the nationwide infrastructure to support them.
 Avoid companies with less than 25 people because we need to work with stable, reputable organizations.
 Only provide companies with headquarters that are in close proximity because we'll have a better chance to engage decision makers.
 Focus on contacts that would be interested in technology to improve tracking, safety, and traceability.
 """,
     goal="""
-Identify local food manucturers.
-Identify key decision makers at these manufacturers.
-Extract their contact information, at least email and direct or mobile phone.
+Research articles on how automation technology is solving problems in manufacturing.
+Identify 10 local food manucturers that may have this problem.
+Identify 3 key decision makers at these manufacturers that may be a victim of this problem.
+Extract their contact information, at least email and direct or mobile phone number.
+Use the articles to create personalized content for each of these contacts.
+Make recommendations of where to add personalizations and changes based on the target.
 """,
 )
 
@@ -30,22 +32,23 @@ async def research():
         name="Research Assistant",
         tools=tools,
         instructions="""
-  You are a helpful open source intelligence internet researcher that will use publicly available information on the internet to solve a problem.
-  You use the search_web tool to find information and provide detailed sources and the scrape_website tool to extract useful information from webpages.
-  You provided detailed, thoughtful responses and explain your reasoning.
-  You only use sources from reputable organizations.
-  You prefer academic, non-corporate, unbiased information from experts.
-  You only use information less than 4 years old.
-  You verify that all information provided is accurate and up-to-date.
-  You provide links for all external information.
-  """,
+You are a helpful open source intelligence internet researcher that will use publicly available information on the internet to solve a problem.
+You use the search_web tool to find information and provide detailed sources and the scrape_website tool to extract useful information from webpages.
+You provided detailed, thoughtful responses and explain your reasoning.
+You only use sources from reputable organizations.
+You prefer academic, non-corporate, unbiased information.
+You only use information less than 4 years old.
+You verify that all information provided is accurate and up-to-date.
+You provide links for all external information.
+""",
     )
 
     print("Initializing Research Assistant...           ", end="\r", flush=True)
     await researchAssistant.initialize()
 
     print("Comprehending problem...               ", end="\r", flush=True)
-    plan = await researchAssistant.take_action(research_problem, 
+    plan = await researchAssistant.take_action(
+        research_problem,
         Action(
             task="""
 You will be given a problem, describe the problem in detail.
@@ -62,13 +65,14 @@ Output the description as this JSON object:
     "plan": ["step one", "step two", "step three", ...],
 }
 """,
-        )
+        ),
     )
 
     print("Executing the plan...                ", end="\r\n", flush=True)
     for step in plan["plan"]:
         print(step)
-        await researchAssistant.take_action(research_problem, 
+        await researchAssistant.take_action(
+            research_problem,
             Action(
                 tool_choice="required",
                 task=f"""
@@ -85,7 +89,7 @@ Output the result as a JSON object with the following fields:
     "missing_info": "any information that was missing or unclear"
 )
 """,
-            )
+            ),
         )
 
     save_messages(researchAssistant.messages, "messages.json")

@@ -6,6 +6,7 @@ import json
 NOW = datetime.datetime.now()
 OUPTUT_FOLDER = f"outputs/{NOW.strftime('%Y-%m-%d_%H-%M-%S/')}"
 
+
 # Function to encode the image as base64
 def encode_image(image_path):
     with open(image_path, "rb") as image_file:
@@ -20,10 +21,12 @@ def save_messages(messages: list, filename: str) -> None:
     with open(file_path, "w") as f:
         json.dump(messages, f, indent=4)
 
+
 def load_messages(filename: str) -> list:
     with open(filename, "r") as f:
         messages = json.load(f)
     return messages
+
 
 def save_webpage(html_file: str) -> None:
     if not os.path.exists(OUPTUT_FOLDER):

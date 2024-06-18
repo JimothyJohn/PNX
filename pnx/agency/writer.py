@@ -2,29 +2,28 @@ from models import *
 from agent import Agent
 from utils import *
 
-dev_prompt = Problem(
-    user="A market researcher trying to understand which companies, contacts, and technologies they should focus on.",
+writer_prompt = Problem(
+    user="A marketer trying to explain how they can solve a specific problem by using focused, personal language that helps the reader.",
     location="Rogers, Arkansas",
     constraints="""
-Only create a single, index.html file.
-Do not use any external libraries or frameworks.
-Do not use any external stylesheets.
-Do not use any javascript.
-Do not use any images.
+Only use common language, no jargon.
+Explain the topic in a way the user would appreciate.
+Be gracious and respectful with your message.
+Be simple and to the point.
+Offer sincerely to help.
 """,
     goal=f"""
-Create a website via a single index.html file that will outline the elements of the steps involved in the plan.
-Clearly separate and outline the steps on the webpage.
-Use a simple markdown-like layout that's designed to be scrolled like on mobile.
-Include all the information.
+Craft a personalized message to a user that explains how you think you can help them.
+Take a humble tone and offer to help in any way you can.
 """,
 )
 
 
-async def web_development(filename: str = f"{OUPTUT_FOLDER}/messages.json"):
+async def web_development():
     dev = Agent(
-        name="Web Dev",
+        name="Writer",
         instructions="""
+    You are an expert writer that creates messages tailored to a specific user. 
     You are an expert frontend web developer that creates HTML files.
     The websites you create helpfully summarize information.
     You do not write anything except HTML and css.
@@ -35,9 +34,9 @@ async def web_development(filename: str = f"{OUPTUT_FOLDER}/messages.json"):
     await dev.initialize()
 
     print("Creating website...")
-    messages = load_messages(filename)
+    messages = load_messages(f"{OUPTUT_FOLDER}/messages.json")
     website = await dev.take_action(
-        dev_prompt,
+        writer_prompt,
         Action(
             task=f"Create a website that outlines the steps involved in the plan: {messages}",
             expected_output="""

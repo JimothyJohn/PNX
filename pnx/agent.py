@@ -16,12 +16,14 @@ class Agent:
         additional_instructions: str = "",
         name: str = "Agent",
         tools: list = [],
+        temperature: float = 0.2,
     ) -> None:
         self.model = model
         self.client = AsyncOpenAI(api_key=api_key)
         self.run = None
         self.instructions = instructions
         self.additional_instructions = additional_instructions
+        self.temperature = temperature
         self.name = name
         self.tools = tools
         self.messages = []
@@ -32,10 +34,13 @@ class Agent:
             instructions=self.instructions,
             tools=self.tools,
             model=self.model,
+            temperature=self.temperature,
         )
         self.thread = await self.client.beta.threads.create()
 
-    async def __run(self, additional_instructions: str = "", tool_choice="auto") -> dict:
+    async def __run(
+        self, additional_instructions: str = "", tool_choice="auto"
+    ) -> dict:
         # https://platform.openai.com/docs/assistants/overview?context=with-streaming
         async with self.client.beta.threads.runs.stream(
             thread_id=self.thread.id,
@@ -60,10 +65,14 @@ class Agent:
             tool_calls = None
 
         lastMessage = await self.client.beta.threads.messages.list(self.thread.id)
-        message_content = lastMessage.data[0].content[0].text.value if lastMessage.data else None
+        print(f"Messages: {lastMessage.data[0].content}")
+        message_content = (
+            lastMessage.data[0].content[0].text.value if lastMessage.data else None
+        )
         messageJson = {}
 
         if message_content:
+            print(f"Response content: {message_content}")  # Debugging line
             print(f"Response content: {message_content}")  # Debugging line
             try:
                 messageJson = json.loads(message_content)
@@ -81,18 +90,22 @@ class Agent:
     async def take_action(self, problem: Problem, action: Action) -> dict:
         await self.client.beta.threads.messages.create(
             thread_id=self.thread.id,
+            role="assistant",
+            content=f"""
+I am a {problem.owner} trying to {problem.goal} in {problem.location}.
+{problem.constraints}.
+""",
+        )
+        await self.client.beta.threads.messages.create(
+            thread_id=self.thread.id,
             role="user",
             content=f"""
-{action.task}. {action.expected_output}.
+{action.task}.
+{action.expected_output}.
 """,
         )
 
-        return await self.__run(
-            additional_instructions=f"""
-I am a {problem.owner} trying to {problem.goal} in {problem.location}.
-{problem.constraints}.
-""", tool_choice=action.tool_choice
-        )
+        return await self.__run()
 
     async def tool_call(self, tool_calls: list, run_id: str) -> None:
         tool_outputs = []
@@ -123,7 +136,7 @@ I am a {problem.owner} trying to {problem.goal} in {problem.location}.
                     tool_outputs=tool_outputs,
                     event_handler=AsyncEventHandler(),
                 ) as stream:
-                    await stream.get_final_run_steps()
+                    await stream.until_done()
 
             except Exception as e:
                 print("Failed to submit tool outputs:", e)

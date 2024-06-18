@@ -5,8 +5,8 @@ from agency.research import research
 
 
 async def main():
-    # await research()
-    await web_development()
+    await research()
+    await web_development(filename="outputs/2024-06-18_02-23-37/messages.json")
 
 
 if __name__ == "__main__":

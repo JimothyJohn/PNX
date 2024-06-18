@@ -42,3 +42,5 @@ class Action(BaseModel):
 * Separate the persona from the task.
 
 * Ask the system to explain its reasoning to help it fix its mistakes.
+
+# IMPORTANT - When you ask an AI to plan it will frequently take an identical route. Learn a good route and program it in.
