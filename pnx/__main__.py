@@ -2,11 +2,13 @@
 import asyncio
 from agency.dev import web_development
 from agency.research import research
+from agency.prospector import prospect
 
 
 async def main():
-    await research()
-    await web_development(filename="outputs/2024-06-18_02-23-37/messages.json")
+    await prospect()
+    await web_development()
+    # await web_development(filename="outputs/2024-06-19_04-42-56/messages.json")
 
 
 if __name__ == "__main__":

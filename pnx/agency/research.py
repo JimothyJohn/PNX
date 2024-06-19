@@ -11,7 +11,9 @@ Industrial automation engineer that works with local manufacturers to automate m
     constraints="""
 Do not include executives, only local managers, as we won't be able to contact high-level, national contacts.
 Do not recommend or mention blockchain technology as we sell hardware and blockchain doesn't work in the manufacturing space.
-Avoid Fortune 500 companies and prioritize small local businesses as this company doesn't have the nationwide infrastructure to support them.
+Avoid large companies and prioritize small, local businesses as this company doesn't have the nationwide infrastructure to support large customers.
+Do not include nationwide or international companies because it's harder to grow business when multiple geographies are involved.
+Do not include nationally-recognized brands because people are already aware of them.
 Avoid companies with less than 25 people because we need to work with stable, reputable organizations.
 Only provide companies with headquarters that are in close proximity because we'll have a better chance to engage decision makers.
 Focus on contacts that would be interested in technology to improve tracking, safety, and traceability.
@@ -42,9 +44,6 @@ You verify that all information provided is accurate and up-to-date.
 You provide links for all external information.
 """,
     )
-
-    print("Initializing Research Assistant...           ", end="\r", flush=True)
-    await researchAssistant.initialize()
 
     print("Comprehending problem...               ", end="\r", flush=True)
     plan = await researchAssistant.take_action(

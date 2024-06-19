@@ -4,34 +4,37 @@ import datetime
 import json
 
 NOW = datetime.datetime.now()
-OUPTUT_FOLDER = f"outputs/{NOW.strftime('%Y-%m-%d_%H-%M-%S/')}"
+OUTPUT_FOLDER = f"outputs/{NOW.strftime('%Y-%m-%d_%H-%M-%S/')}"
 
 
 # Function to encode the image as base64
-def encode_image(image_path):
+def encode_image(image_path: str) -> str:
     with open(image_path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode("utf-8")
 
 
-def save_messages(messages: list, filename: str) -> None:
-    if not os.path.exists(OUPTUT_FOLDER):
-        os.makedirs(OUPTUT_FOLDER)
+# Save chain of images as JSON
+def save_messages(messages: list, filename: str = "messages.json") -> None:
+    if not os.path.exists(OUTPUT_FOLDER):
+        os.makedirs(OUTPUT_FOLDER)
 
-    file_path = os.path.join(OUPTUT_FOLDER, filename)
+    file_path = os.path.join(OUTPUT_FOLDER, filename)
     with open(file_path, "w") as f:
         json.dump(messages, f, indent=4)
 
 
-def load_messages(filename: str) -> list:
+# Load chain of images JSON
+def load_messages(filename: str = f"{OUTPUT_FOLDER}/messages.json") -> list:
     with open(filename, "r") as f:
-        messages = json.load(f)
+        messages = json.loads(f.read())
+
     return messages
 
 
-def save_webpage(html_file: str) -> None:
-    if not os.path.exists(OUPTUT_FOLDER):
-        os.makedirs(OUPTUT_FOLDER)
+# Save webpage to HTML file
+def save_webpage(html_file: str, filename: str = f"{OUTPUT_FOLDER}/index.html") -> None:
+    if not os.path.exists(OUTPUT_FOLDER):
+        os.makedirs(OUTPUT_FOLDER)
 
-    file_path = os.path.join(OUPTUT_FOLDER, "index.html")
-    with open(file_path, "w") as f:
+    with open(filename, "w") as f:
         f.write(html_file)

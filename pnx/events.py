@@ -1,21 +1,17 @@
-import logging
+from config import logger
 from typing_extensions import override
 from openai import AsyncAssistantEventHandler
 from tools import *
 
-# Configure logging
-logging.basicConfig(
-    level=logging.WARNING, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
-
-
 # https://platform.openai.com/docs/assistants/overview?context=with-streaming
 # https://github.com/openai/openai-python/blob/54a5911f5215148a0bdeb10e2bcfb84f635a75b9/src/openai/lib/streaming/_assistants.py#L459
 class AsyncEventHandler(AsyncAssistantEventHandler):
+    """
+    # Stream all responses to console.
     @override
     async def on_text_delta(self, delta, snapshot):
         print(delta.value, end="", flush=True)
+    """
 
     # https://platform.openai.com/docs/assistants/tools/file-search/step-5-create-a-run-and-check-the-output
     @override
@@ -38,5 +34,5 @@ class AsyncEventHandler(AsyncAssistantEventHandler):
         logger.info("\n".join(citations))
 
     @override
-    async def on_tool_call_done(self, tool_call):
+    async def on_tool_call_done(self, tool_call) -> None:
         logger.info(f"\ntool call done > {tool_call}\n")

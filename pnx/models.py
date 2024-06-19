@@ -3,12 +3,12 @@ from pydantic import BaseModel
 
 class Problem(BaseModel):
     owner: str = ""
-    goal: str
     location: str = ""
-    constraints: str = ""
+    statement: str = ""
 
 
 class Action(BaseModel):
-    task: str
-    expected_output: str
+    expected_output: str = ""
     tool_choice: str = "auto"
+    goal: str = ""
+    constraints: str = ""

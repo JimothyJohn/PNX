@@ -4,7 +4,7 @@ A Python wrapper for OpenAI Assistant. Utilizes structured inputs to delivered s
 
 ## Quickstart
 
-You'll need to create custom problems and actions using the example in [research.py](pnx/research.py):
+You'll need to create custom problems and actions using the example in [prospector.py](pnx/prospector.py):
 
 ```bash
 # Install repo
@@ -18,29 +18,31 @@ poetry run python pnx
 
 [Prompt schema](pnx/models.py)
 
-```python
+```py
 class Problem(BaseModel):
     owner: str = ""
-    goal: str
     location: str = ""
-    constraints: str = ""
-
+    statement: str = ""
 
 class Action(BaseModel):
-    task: str
-    additional_instructions: str
-    expected_output: str
+    expected_output: str = ""
     tool_choice: str = "auto"
+    goal: str = ""
+    constraints: str = ""
 ```
 
 ### Learnings
 
 * Keep prompts as compact as possible.
 
-* Reduce hallucinations by forcing the use of tools.
+* Reduce hallucinations by making tool_choice "required".
 
 * Separate the persona from the task.
 
 * Ask the system to explain its reasoning to help it fix its mistakes.
 
-# IMPORTANT - When you ask an AI to plan it will frequently take an identical route. Learn a good route and program it in.
+* IMPORTANT - When you ask an AI to plan it will frequently take an identical route. Learn a good route and program it in.
+
+## TODO
+
+[ ] Integrate with Azure

@@ -1,6 +1,7 @@
 import json
 import os
 import requests
+from config import logger
 
 tools = [
     {
@@ -58,6 +59,10 @@ def search_web(query: str) -> str:
 
     response = requests.request("POST", url, headers=headers, data=payload)
 
+    resultsJson = response.json()["organic"]
+
+    logger.info(f"Found {len(resultsJson)} results for {query}")
+
     return response.text
 
 
@@ -81,5 +86,26 @@ def scrape_website(website: str) -> str:
     }
 
     response = requests.request("POST", url, headers=headers, data=payload)
+
+    responeJson = response.json()
+
+    if hasattr(responeJson, "message"):
+        return f"You need to scrape {website} again"
+
+    domain = website.split(".")
+
+    logger.info(f"Visiting {domain[1]}.{domain[2]}...")
+
+    # Limit the size of the output to 512KB
+    # openai.BadRequestError: Error code: 400 - {'error': {'message': "'tool_outputs' too large: the combined tool outputs must be less than 512kb.", 'type': 'invalid_request_error', 'param': 'tool_outputs', 'code': 'invalid_value'}}
+    max_size = 512 * 512  # 512KB in bytes
+    output = response.text
+
+    if len(output) > max_size:
+        # Summarize the output to fit within the size limit
+        summary = (
+            f"Output too large to display. Content from {website} has been omitted."
+        )
+        return summary
 
     return response.text
