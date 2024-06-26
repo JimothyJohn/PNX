@@ -2,6 +2,7 @@ import os
 import base64
 import datetime
 import json
+from tools import *
 
 NOW = datetime.datetime.now()
 OUTPUT_FOLDER = f"outputs/{NOW.strftime('%Y-%m-%d_%H-%M-%S/')}"
@@ -38,3 +39,39 @@ def save_webpage(html_file: str, filename: str = f"{OUTPUT_FOLDER}/index.html") 
 
     with open(filename, "w") as f:
         f.write(html_file)
+
+
+async def get_tool_outputs(tool_calls: list) -> list:
+    tool_outputs = []
+    for tool in tool_calls:
+        if tool.function.name == "search_web":
+            tool_query_string = eval(tool.function.arguments)["query"]
+            output = search_web(tool_query_string)
+            tool_outputs.append({"tool_call_id": tool.id, "output": f"{output}"})
+
+        elif tool.function.name == "scrape_website":
+            tool_query_string = eval(tool.function.arguments)["url"]
+            output = scrape_website(tool_query_string)
+            tool_outputs.append({"tool_call_id": tool.id, "output": f"{output}"})
+
+        elif tool.function.name == "get_linkedin_profile":
+            tool_query_string = eval(tool.function.arguments)["profile_id"]
+            logger.info(f"Getting LinkedIn profile {tool_query_string}...")
+            output = get_linkedin_profile(tool_query_string)
+            tool_outputs.append({"tool_call_id": tool.id, "output": f"{output}"})
+
+        elif tool.function.name == "get_contact":
+            firstName_string = eval(tool.function.arguments)["firstName"]
+            lastName_string = eval(tool.function.arguments)["lastName"]
+            companyName_string = eval(tool.function.arguments)["companyName"]
+            logger.info(
+                f"Getting contact info for {firstName_string} {lastName_string}..."
+            )
+            output = get_contact(firstName_string, lastName_string, companyName_string)
+            logger.info(f"Received {output}...")
+            tool_outputs.append({"tool_call_id": tool.id, "output": f"{output}"})
+
+        else:
+            logger.warning(f"Error: function {tool.function.name} does not exist")
+
+    return tool_outputs

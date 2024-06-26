@@ -2,15 +2,18 @@ import os
 import json
 from config import logger
 from openai import AsyncAzureOpenAI, AsyncOpenAI
+from anthropic import Anthropic
 from utils import *
 from tools import *
 from events import AsyncEventHandler
 from models import *
 
+
 class Agent:
     def __init__(
         self,
         name: str = "Agent",
+        # model: str = "gpt-3.5-turbo-16k",
         model: str = "gpt-4o-2024-05-13",
         api_key: str = os.environ.get("OPENAI_API_KEY"),
         instructions: str = "",
@@ -22,9 +25,9 @@ class Agent:
         if os.environ.get("PLATFORM") == "azure":
             self.model = os.environ.get("AZURE_OPENAI_DEPLOYMENT")
             self.client = AsyncAzureOpenAI(
-                api_key=os.environ.get("AZURE_OPENAI_API_KEY"),  
+                api_key=os.environ.get("AZURE_OPENAI_API_KEY"),
                 api_version=os.environ.get("AZURE_OPENAI_API_VERSION"),
-                azure_endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT"),
+                azure_endpoint=os.environ.get("AZURE_OPENAI_ENDPOINT"),
             )
 
         self.instructions = instructions
@@ -38,8 +41,7 @@ class Agent:
     async def __run(
         self, additional_instructions: str = "", tool_choice="auto"
     ) -> dict:
-
-        if self.assistant == None: 
+        if self.assistant == None:
             self.assistant = await self.client.beta.assistants.create(
                 name=self.name,
                 instructions=self.instructions,
@@ -69,7 +71,7 @@ class Agent:
         while hasattr(steps[-1].step_details, "tool_calls"):
             tool_calls = steps[-1].step_details.tool_calls
 
-            tool_outputs = await self.tool_outputs(tool_calls, run_id=steps[-1].id)
+            tool_outputs = await get_tool_outputs(tool_calls)
 
             async with self.client.beta.threads.runs.submit_tool_outputs_stream(
                 thread_id=self.thread.id,
@@ -104,7 +106,7 @@ class Agent:
         return messageJson
 
     async def take_action(self, problem: Problem, action: Action) -> dict:
-        if self.thread == None: 
+        if self.thread == None:
             self.thread = await self.client.beta.threads.create()
 
         await self.client.beta.threads.messages.create(
@@ -114,38 +116,11 @@ class Agent:
 {action.goal}.
 {action.expected_output}.
 {action.constraints}.
+Do not output any information you didn't find online.
 """,
         )
 
-        return await self.__run()
-
-    async def tool_outputs(self, tool_calls: list, run_id: str) -> list:
-        tool_outputs = []
-        for tool in tool_calls:
-            if tool.function.name == "search_web":
-                tool_query_string = eval(tool.function.arguments)["query"]
-                output = search_web(tool_query_string)
-                tool_outputs.append({"tool_call_id": tool.id, "output": f"{output}"})
-
-            elif tool.function.name == "scrape_website":
-                tool_query_string = eval(tool.function.arguments)["url"]
-                output = scrape_website(tool_query_string)
-                tool_outputs.append({"tool_call_id": tool.id, "output": f"{output}"})
-
-            elif tool.function.name == "get_linkedin_profile":
-                tool_query_string = eval(tool.function.arguments)["profile_id"]
-                output = scrape_website(tool_query_string)
-                tool_outputs.append({"tool_call_id": tool.id, "output": f"{output}"})
-
-            elif tool.function.name == "get_contact_info":
-                tool_query_string = eval(tool.function.arguments)["firstName", "lastName", "companyName"]
-                output = scrape_website(tool_query_string)
-                tool_outputs.append({"tool_call_id": tool.id, "output": f"{output}"})
-
-            else:
-                logger.warning(f"Error: function {tool.function.name} does not exist")
-
-        return tool_outputs
+        return await self.__run(tool_choice=action.tool_choice)
 
     async def upload(self, filename: str) -> None:
         await self.client.files.create(file=open(f"{filename}", "rb"), purpose="vision")

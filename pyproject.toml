@@ -15,6 +15,7 @@ linkedin-api = "^2.1.1"
 browser-cookie3 = "^0.19.1"
 zi-api-auth-client = "^2.0.1"
 aiohttp = "^3.9.5"
+anthropic = "^0.29.0"
 
 
 [build-system]

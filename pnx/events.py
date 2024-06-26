@@ -3,6 +3,7 @@ from typing_extensions import override
 from openai import AsyncAssistantEventHandler
 from tools import *
 
+
 # https://platform.openai.com/docs/assistants/overview?context=with-streaming
 # https://github.com/openai/openai-python/blob/54a5911f5215148a0bdeb10e2bcfb84f635a75b9/src/openai/lib/streaming/_assistants.py#L459
 class AsyncEventHandler(AsyncAssistantEventHandler):

@@ -60,9 +60,6 @@ async def web_development(filename: str = f"{OUTPUT_FOLDER}/messages.json"):
     """,
     )
 
-    print("Initializing dev...           ", end="\r", flush=True)
-    await dev.initialize()
-
     print("Creating website...           ", end="\r", flush=True)
     messages = load_messages(filename)
     website = await dev.take_action(
